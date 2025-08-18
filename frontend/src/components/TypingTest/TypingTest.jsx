@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import Timer from "./Timer";
 import QuoteDisplay from "./QuoteDisplay";
 import InputBox from "./InputBox";
@@ -10,28 +11,26 @@ import useFetchQuotes from "../../hooks/useFetchQuotes";
 
 export default function TypingTest() {
     const [duration, setDuration] = useState(60);
-    const [zenMode, setZenMode] = useState(false);
     const { quotes, loading, error, reload } = useFetchQuotes();
-    const { timeLeft, isRunning, start, reset } = useTimer(duration, zenMode);
-    const elapsedTime = zenMode ? timeLeft : duration - timeLeft;
+    const { timeLeft, elapsedTime, isRunning, hasStarted, start, stop, reset, updateSettings, currentTime, currentZen } = useTimer(duration, false);
     const typingTest = useTypingTest(quotes, isRunning, elapsedTime);
     const inputRef = useRef(null);
 
     useEffect(() => {
-        if (!zenMode && timeLeft === 0) {
-            typingTest.stop();
+        if (!currentZen && timeLeft === 0) {
+            stop();
         }
-    }, [timeLeft, zenMode]);
+    }, [timeLeft, currentZen]);
 
     useEffect(() => {
         const handleEsc = (e) => {
-            if (zenMode && e.key === "Escape") {
-                typingTest.stop();
+            if (currentZen && e.key === "Escape") {
+                stop();
             }
         };
         window.addEventListener("keydown", handleEsc);
         return () => window.removeEventListener("keydown", handleEsc);
-    }, [zenMode]);
+    }, [currentZen, stop]);
 
     if (loading) return <p>Loading quotes...</p>;
     if (error) return <p>Error: {error}</p>;
@@ -43,17 +42,26 @@ export default function TypingTest() {
         inputRef.current?.focus();
     }
 
+    const handleTimeSelect = (newDuration) => {
+        setDuration(newDuration);
+        updateSettings(newDuration, false);
+    };
+
+    const handleZenToggle = () => {
+        updateSettings(currentTime, true);
+    }
+
     return (
         <div>
             <div className="mb-4 space-x-2">
-                <button onClick={() => { setDuration(60); setZenMode(false); }}>Jeremy</button>
-                <button onClick={() => { setDuration(120); setZenMode(false); }}>Bearimy</button>
-                <button onClick={() => { setDuration(300); setZenMode(false); }}>Jeremy Bearimy</button>
-                <button onClick={() => { setZenMode(true); }}>Dot over the i</button>
+                <button onClick={() => handleTimeSelect(60)}>Jeremy</button>
+                <button onClick={() => handleTimeSelect(120)}>Bearimy</button>
+                <button onClick={() => handleTimeSelect(300)}>Jeremy Bearimy</button>
+                <button onClick={handleZenToggle}>Dot over the i</button>
             </div>
 
-            {!zenMode && <Timer timeLeft={timeLeft} />}
-            {zenMode && <h2>Zen Mode - Press ESC to stop</h2>}
+            {!currentZen && <Timer timeLeft={timeLeft} />}
+            {currentZen && <h2>Zen Mode - Press ESC to stop</h2>}
             
             <QuoteDisplay 
                 wordList={typingTest.wordList}
@@ -62,12 +70,13 @@ export default function TypingTest() {
                 typedWord={typingTest.typedWord}
             />
             <InputBox 
+                ref={inputRef}
                 typedWord={typingTest.typedWord}
                 handleTyping={(e) => {
                     if (!isRunning) start ();
                     typingTest.handleTyping(e.target.value);
                 }}
-                disabled={!isRunning && timeLeft === 0}
+                disabled={(!currentZen && timeLeft === 0) || (currentZen && hasStarted && !isRunning)}
             />
             <Stats 
                 rawWpm={typingTest.rawWpm} 
