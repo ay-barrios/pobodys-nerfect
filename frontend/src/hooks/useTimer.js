@@ -1,49 +1,76 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function useTimer(initialTime = 60, zenMode = false) {
+export default function useTimer(initialTime = 60, initialZen=false) {
     const [timeLeft, setTimeLeft] = useState(initialTime);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [hasStarted, setHasStarted] = useState(false);
     const [isRunning, setIsRunning] = useState(false);
     const [currentTime, setCurrentTime] = useState(initialTime);
-    const [currentZen, setCurrentZen] = useState(zenMode);
+    const [currentZen, setCurrentZen] = useState(initialZen);
+    
     const timerRef = useRef(null);
+    const zenRef = useRef(initialZen);
+
+    useEffect(() => {
+        zenRef.current = currentZen;
+    }, [currentZen]);
+
+    const clear = () => {
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+    }
+
+    const tick = () => {
+        setElapsedTime((prev) => prev + 1);
+        if (!zenRef.current) {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clear();
+                    setIsRunning(false);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }
+    }
 
     const start = () => {
         if (!isRunning) {
             setIsRunning(true);
-            timerRef.current = setInterval(() => {
-                setElapsedTime(prev => prev + 1);
-                if (!currentZen) {
-                    setTimeLeft((prev) => {
-                        if (prev <= 1) {
-                            clearInterval(timerRef.current);
-                            setIsRunning(false);
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
-                }
-            }, 1000);
+            setHasStarted(true);
+            timerRef.current = setInterval(tick, 1000);
         }
     };
 
     const stop = () => {
-        clearInterval(timerRef.current);
+        clear();
         setIsRunning(false);
-    }
+    };
 
     const reset = (newTime = currentTime, newZen = currentZen) => {
-        clearInterval(timerRef.current);
+        clear();
+        setElapsedTime(0);
+        setTimeLeft(newTime);
+        setIsRunning(false);
+        setHasStarted(false);
+    };
+
+    const updateSettings = (newTime, newZen = currentZen) => {
+        clear();
         setCurrentTime(newTime);
         setCurrentZen(newZen);
         setElapsedTime(0);
         setTimeLeft(newTime);
         setIsRunning(false);
-    };
+    }
 
     useEffect(() => {
-        return () => clearInterval(timerRef.current);
-    }, []);
+        if (!isRunning && !currentZen) {
+            setTimeLeft(currentTime);
+        }
+    }, [currentTime, currentZen, isRunning]);
 
-    return { timeLeft, elapsedTime, isRunning, start, stop, reset };
+    return { timeLeft, elapsedTime, isRunning, hasStarted, currentTime, currentZen, start, stop, reset, updateSettings };
 }
