@@ -12,7 +12,7 @@ import useFetchQuotes from "../../hooks/useFetchQuotes";
 export default function TypingTest() {
     const [duration, setDuration] = useState(60);
     const { quotes, loading, error, reload } = useFetchQuotes();
-    const { timeLeft, elapsedTime, isRunning, hasStarted, start, stop, reset, updateSettings, currentTime, currentZen } = useTimer(duration, false);
+    const { timeLeft, elapsedTime, isRunning, isFinished, hasStarted, start, stop, reset, updateSettings, currentTime, currentZen } = useTimer(duration, false);
     const typingTest = useTypingTest(quotes, isRunning, elapsedTime);
     const inputRef = useRef(null);
 
@@ -42,9 +42,12 @@ export default function TypingTest() {
         inputRef.current?.focus();
     }
 
-    const handleTimeSelect = (newDuration) => {
+    const handleTimeSelect = async (newDuration) => {
         setDuration(newDuration);
         updateSettings(newDuration, false);
+        typingTest.resetTest();
+        await reload();
+        inputRef.current?.focus();
     };
 
     const handleZenToggle = () => {
@@ -76,7 +79,12 @@ export default function TypingTest() {
                     if (!isRunning) start ();
                     typingTest.handleTyping(e.target.value);
                 }}
-                disabled={(!currentZen && timeLeft === 0) || (currentZen && hasStarted && !isRunning)}
+                disabled={isFinished || (!currentZen && timeLeft === 0) || (currentZen && hasStarted && !isRunning)}
+                onFocus={() => {
+                    if (isFinished) {
+                        handleRestart();
+                    }
+                }}
             />
             <Stats 
                 rawWpm={typingTest.rawWpm} 

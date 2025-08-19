@@ -5,6 +5,7 @@ export default function useTimer(initialTime = 60, initialZen=false) {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [hasStarted, setHasStarted] = useState(false);
     const [isRunning, setIsRunning] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
     const [currentTime, setCurrentTime] = useState(initialTime);
     const [currentZen, setCurrentZen] = useState(initialZen);
     
@@ -29,6 +30,7 @@ export default function useTimer(initialTime = 60, initialZen=false) {
                 if (prev <= 1) {
                     clear();
                     setIsRunning(false);
+                    setIsFinished(true);
                     return 0;
                 }
                 return prev - 1;
@@ -38,6 +40,7 @@ export default function useTimer(initialTime = 60, initialZen=false) {
 
     const start = () => {
         if (!isRunning) {
+            setIsFinished(false);
             setIsRunning(true);
             setHasStarted(true);
             timerRef.current = setInterval(tick, 1000);
@@ -55,6 +58,7 @@ export default function useTimer(initialTime = 60, initialZen=false) {
         setTimeLeft(newTime);
         setIsRunning(false);
         setHasStarted(false);
+        setIsFinished(false);
     };
 
     const updateSettings = (newTime, newZen = currentZen) => {
@@ -72,5 +76,5 @@ export default function useTimer(initialTime = 60, initialZen=false) {
         }
     }, [currentTime, currentZen, isRunning]);
 
-    return { timeLeft, elapsedTime, isRunning, hasStarted, currentTime, currentZen, start, stop, reset, updateSettings };
+    return { timeLeft, elapsedTime, isRunning, isFinished, hasStarted, currentTime, currentZen, start, stop, reset, updateSettings };
 }
