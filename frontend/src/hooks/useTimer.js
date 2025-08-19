@@ -66,8 +66,12 @@ export default function useTimer(initialTime = 60, initialZen=false) {
         setCurrentTime(newTime);
         setCurrentZen(newZen);
         setElapsedTime(0);
-        setTimeLeft(newTime);
+        if (!newZen) {
+            setTimeLeft(newTime);
+        }
         setIsRunning(false);
+        setIsFinished(false);
+        setHasStarted(false); 
     }
 
     useEffect(() => {
