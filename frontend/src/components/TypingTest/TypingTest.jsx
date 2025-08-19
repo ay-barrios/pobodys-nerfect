@@ -50,8 +50,11 @@ export default function TypingTest() {
         inputRef.current?.focus();
     };
 
-    const handleZenToggle = () => {
+    const handleZenToggle = async () => {
         updateSettings(currentTime, true);
+        typingTest.resetTest();
+        await reload();
+        inputRef.current?.focus();
     }
 
     return (
@@ -91,6 +94,7 @@ export default function TypingTest() {
                 accuracy={typingTest.accuracy} 
                 netWpm={typingTest.netWpm} 
                 errors={typingTest.errors} 
+                currentZen={currentZen}
             />
             <div className="mt-4">
                 <button
