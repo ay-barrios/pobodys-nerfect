@@ -18,7 +18,7 @@ export default function QuoteDisplay({ wordList, history, currentWordIndex, type
                 if (index === currentWordIndex) {
                     return (
                         // We highlight index with yellow
-                        <span key={index} className="bg-yellow-200"> 
+                        <span key={index} className="bg-yellow-700"> 
                             {/* We split word into individual characters and color the character based on its correctness (green is correct; red is incorrect) */}
                             {word.split("").map((char, charIndex) => {
                                 let charClass = "";
